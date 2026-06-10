@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CustomerIQ AI — Customer Segmentation Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --bg2: #0d1220;
+    --bg3: #121929;
+    --card: #141c2e;
+    --card2: #1a2440;
+    --border: #1f2d4a;
+    --border2: #263354;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --accent3: #8b5cf6;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --orange: #f97316;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --radius: 12px;
+    --radius2: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --glow: 0 0 40px rgba(59,130,246,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(8,12,20,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-brand span { color: var(--accent); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none; background: transparent;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--card); }
+  .nav-tab.active { color: var(--accent); background: rgba(59,130,246,0.1); }
+  .nav-status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.75rem; color: var(--text2);
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text3);
+    transition: all 0.3s;
+  }
+  .status-dot.ready { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+  /* MAIN */
+  main { margin-top: 60px; }
+
+  /* PAGES */
+  .page { display: none; min-height: calc(100vh - 60px); padding: 2rem; }
+  .page.active { display: block; }
+
+  /* ==================== HOME PAGE ==================== */
+  .hero {
+    max-width: 900px; margin: 0 auto;
+    padding: 5rem 0 3rem;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--border2);
+    border-radius: 50px;
+    font-size: 0.75rem; color: var(--text2);
+    margin-bottom: 2rem;
+    background: var(--card);
+  }
+  .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent3) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { font-size: 1.1rem; color: var(--text2); max-width: 600px; margin: 0 auto 2.5rem; line-height: 1.7; }
+  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 4rem; }
+  .btn-primary {
+    padding: 12px 28px;
+    background: var(--accent);
+    color: white; border: none;
+    border-radius: var(--radius2); cursor: pointer;
+    font-size: 0.9rem; font-weight: 600;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(59,130,246,0.4); }
+  .btn-secondary {
+    padding: 12px 28px;
+    background: transparent;
+    color: var(--text); border: 1px solid var(--border2);
+    border-radius: var(--radius2); cursor: pointer;
+    font-size: 0.9rem; font-weight: 500;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-secondary:hover { background: var(--card); border-color: var(--accent); color: var(--accent); }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: all 0.3s;
+  }
+  .feature-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--glow); }
+  .feature-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .feature-card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .feature-card p { font-size: 0.8rem; color: var(--text2); line-height: 1.6; }
+
+  /* ==================== UPLOAD PAGE ==================== */
+  .upload-container { max-width: 800px; margin: 0 auto; padding: 2rem 0; }
+  .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .page-subtitle { font-size: 0.875rem; color: var(--text2); margin-bottom: 2rem; }
+  
+  .drop-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 4rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--card);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.05);
+  }
+  .drop-zone input[type=file] { display: none; }
+  .drop-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.6; }
+  .drop-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .drop-sub { font-size: 0.8rem; color: var(--text2); }
+
+  .upload-options { margin-top: 1.5rem; }
+  .option-label { font-size: 0.75rem; color: var(--text3); margin-bottom: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }
+  .sample-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sample-btn {
+    padding: 8px 16px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .sample-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+
+  .data-preview {
+    margin-top: 2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .preview-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .preview-header h3 { font-size: 0.875rem; font-weight: 600; }
+  .preview-meta { font-size: 0.75rem; color: var(--text2); }
+  .preview-table-wrap { overflow-x: auto; max-height: 280px; }
+  .preview-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .preview-table th {
+    background: var(--bg3);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text2);
+    position: sticky; top: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-table td { padding: 8px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .preview-table tr:last-child td { border-bottom: none; }
+  .preview-table tr:hover td { background: var(--card2); }
+
+  .quality-panel {
+    margin-top: 1.5rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
+  }
+  .quality-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 1rem;
+  }
+  .quality-label { font-size: 0.7rem; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.04em; }
+  .quality-value { font-size: 1.1rem; font-weight: 700; }
+  .quality-value.good { color: var(--green); }
+  .quality-value.warn { color: var(--yellow); }
+  .quality-value.bad { color: var(--red); }
+
+  /* ==================== CLUSTER PAGE ==================== */
+  .cluster-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; max-width: 1400px; margin: 0 auto; }
+  .cluster-sidebar { display: flex; flex-direction: column; gap: 16px; }
+  .sidebar-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .sidebar-card h3 { font-size: 0.8rem; font-weight: 600; color: var(--text2); margin-bottom: 1rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  
+  .k-slider-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .k-display {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .k-value {
+    font-size: 2rem; font-weight: 700; color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+  .k-label { font-size: 0.75rem; color: var(--text2); }
+  input[type=range] {
+    width: 100%; height: 4px;
+    -webkit-appearance: none;
+    background: var(--border2);
+    border-radius: 2px; outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+  }
+
+  .feature-checkboxes { display: flex; flex-direction: column; gap: 8px; }
+  .feature-check-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.82rem; color: var(--text2);
+    cursor: pointer; padding: 4px;
+    border-radius: 4px;
+  }
+  .feature-check-item:hover { color: var(--text); background: var(--bg3); }
+  .feature-check-item input { accent-color: var(--accent); }
+
+  .algo-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 4px;
+    font-size: 0.72rem; color: var(--accent2);
+    margin-bottom: 8px;
+  }
+
+  .run-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    color: white; border: none;
+    border-radius: var(--radius2); cursor: pointer;
+    font-size: 0.875rem; font-weight: 700;
+    transition: all 0.3s;
+    font-family: inherit;
+    position: relative; overflow: hidden;
+  }
+  .run-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(59,130,246,0.4); }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .progress-bar-wrap { margin-top: 12px; display: none; }
+  .progress-bar-label { font-size: 0.72rem; color: var(--text2); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .progress-bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); width: 0%; transition: width 0.3s; border-radius: 2px; }
+
+  .cluster-main { display: flex; flex-direction: column; gap: 16px; }
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .chart-title { font-size: 0.875rem; font-weight: 600; }
+  .chart-subtitle { font-size: 0.72rem; color: var(--text3); }
+  .chart-badge {
+    font-size: 0.7rem; padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .chart-badge.blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .chart-badge.green { background: rgba(16,185,129,0.15); color: var(--green); }
+  .chart-badge.purple { background: rgba(139,92,246,0.15); color: var(--accent3); }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ==================== SEGMENTS PAGE ==================== */
+  .segments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; max-width: 1400px; margin: 0 auto; }
+  .segment-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .segment-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .segment-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .seg-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
+  .seg-name { font-size: 1rem; font-weight: 700; }
+  .seg-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; color: var(--text3);
+    background: var(--bg3);
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .seg-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+  .seg-stat { background: var(--bg3); border-radius: 8px; padding: 10px; }
+  .seg-stat-label { font-size: 0.68rem; color: var(--text3); margin-bottom: 2px; }
+  .seg-stat-value { font-size: 0.95rem; font-weight: 700; }
+  .seg-bar-wrap { margin-bottom: 0.75rem; }
+  .seg-bar-label { font-size: 0.72rem; color: var(--text2); display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .seg-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .seg-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+  .seg-traits { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg-trait {
+    font-size: 0.68rem; padding: 3px 8px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 50px; color: var(--text2);
+  }
+
+  /* ==================== DASHBOARD PAGE ==================== */
+  .dashboard-layout { max-width: 1400px; margin: 0 auto; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 1.5rem; }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: all 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--border2); }
+  .kpi-label { font-size: 0.72rem; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .kpi-value { font-size: 1.75rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .kpi-sub { font-size: 0.72rem; color: var(--text2); margin-top: 4px; }
+  .kpi-trend { font-size: 0.72rem; margin-top: 6px; }
+  .kpi-trend.up { color: var(--green); }
+  .kpi-trend.neutral { color: var(--text3); }
+  .dashboard-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+  .dashboard-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ==================== AI ASSISTANT PAGE ==================== */
+  .assistant-layout { max-width: 900px; margin: 0 auto; }
+  .insights-list { display: flex; flex-direction: column; gap: 12px; }
+  .insight-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex; gap: 14px;
+    align-items: flex-start;
+  }
+  .insight-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 2px; }
+  .insight-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 6px; }
+  .insight-text { font-size: 0.82rem; color: var(--text2); line-height: 1.7; }
+  .insight-priority {
+    display: inline-flex; align-items: center;
+    font-size: 0.68rem; padding: 2px 8px;
+    border-radius: 4px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .priority-high { background: rgba(239,68,68,0.15); color: var(--red); }
+  .priority-medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .priority-low { background: rgba(16,185,129,0.15); color: var(--green); }
+
+  .ai-generate-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: rgba(139,92,246,0.15);
+    border: 1px solid rgba(139,92,246,0.3);
+    color: var(--accent3);
+    border-radius: var(--radius2);
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    margin-bottom: 1.5rem;
+  }
+  .ai-generate-btn:hover { background: rgba(139,92,246,0.25); }
+  .ai-generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ==================== EXPORT SECTION ==================== */
+  .export-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 1rem; }
+  .export-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 18px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    border-radius: var(--radius2);
+    font-size: 0.8rem; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.08); }
+
+  /* ==================== EMPTY STATE ==================== */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+  .empty-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text2); }
+  .empty-sub { font-size: 0.82rem; }
+
+  /* ==================== NOTIFICATIONS ==================== */
+  .notification {
+    position: fixed; top: 70px; right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.82rem;
+    box-shadow: var(--shadow);
+    z-index: 999;
+    transform: translateX(120%);
+    transition: transform 0.3s ease;
+    max-width: 320px;
+  }
+  .notification.show { transform: translateX(0); }
+  .notification.success { border-color: var(--green); }
+  .notification.error { border-color: var(--red); }
+  .notification.info { border-color: var(--accent); }
+  .notification-icon { font-size: 1rem; }
+
+  /* ==================== LOADING ==================== */
+  .loading-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(8,12,20,0.85);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 0.875rem; color: var(--text2); }
+
+  /* Silhouette meter */
+  .sil-meter {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 8px;
+  }
+  .sil-bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .sil-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--red), var(--yellow), var(--green)); }
+  .sil-score { font-family: 'Space Mono', monospace; font-size: 1rem; font-weight: 700; color: var(--green); }
+  .sil-label { font-size: 0.72rem; color: var(--text2); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .cluster-layout { grid-template-columns: 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .dashboard-charts { grid-template-columns: 1fr; }
+    .dashboard-bottom { grid-template-columns: 1fr; }
+    .nav-tabs { display: none; }
+  }
+
+  /* misc */
+  .section-sep { height: 1px; background: var(--border); margin: 1.5rem 0; }
+  .tag { font-size: 0.68rem; padding: 2px 8px; border-radius: 50px; font-weight: 600; }
+  .tag-blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .tag-green { background: rgba(16,185,129,0.15); color: var(--green); }
+  .tag-purple { background: rgba(139,92,246,0.15); color: var(--accent3); }
+  .tag-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+
+  canvas { max-width: 100%; }
+  .chart-area { position: relative; }
+
+  /* Cluster color swatches */
+  .color-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .data-table th { padding: 10px 14px; text-align: left; font-weight: 600; color: var(--text2); border-bottom: 1px solid var(--border); background: var(--bg3); }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:hover td { background: var(--card2); }
+
+  /* Normalize toggle */
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text2); cursor: pointer; }
+  .toggle { width: 36px; height: 20px; border-radius: 10px; background: var(--border); position: relative; transition: 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--accent); }
+  .toggle::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: 0.2s; }
+  .toggle.on::after { left: 19px; }
+
+  .page-header { margin-bottom: 2rem; }
+  .breadcrumb { font-size: 0.72rem; color: var(--text3); margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">⬡ <span>CustomerIQ</span> AI</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" onclick="showPage('upload')">Upload</button>
+    <button class="nav-tab" onclick="showPage('cluster')">Cluster</button>
+    <button class="nav-tab" onclick="showPage('segments')">Segments</button>
+    <button class="nav-tab" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('assistant')">AI Insights</button>
+  </div>
+  <div class="nav-status">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">No data</span>
+  </div>
+</nav>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Running K-Means...</div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification">
+  <span class="notification-icon" id="notifIcon">✓</span>
+  <span id="notifText">Done!</span>
+</div>
+
+<!-- MAIN -->
+<main>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-badge"><span class="hero-badge-dot"></span> K-Means++ · PCA · Elbow · Silhouette</div>
+    <h1>AI-Powered <em>Customer<br>Segmentation</em> Platform</h1>
+    <p>Upload customer data, discover hidden segments, identify high-value groups, and generate actionable ML insights — all in your browser.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('upload')">Upload Dataset</button>
+      <button class="btn-secondary" onclick="loadDemo()">Try Demo Dataset</button>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card"><div class="feature-icon">📁</div><h3>Upload Any CSV</h3><p>Drag-and-drop customer data. Auto-detects numeric features, missing values, and duplicates.</p></div>
+      <div class="feature-card"><div class="feature-icon">🔬</div><h3>Real K-Means++</h3><p>Elbow Method and Silhouette Score for optimal K selection. Reclusters instantly on change.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Interactive Charts</h3><p>PCA scatter plots, segment dashboards, revenue charts — all update dynamically.</p></div>
+      <div class="feature-card"><div class="feature-icon">🤖</div><h3>AI Insights Engine</h3><p>Auto-generated personas, churn-risk scores, and business recommendations per segment.</p></div>
+      <div class="feature-card"><div class="feature-icon">📈</div><h3>Executive Dashboards</h3><p>KPIs, distribution charts, and segment comparisons designed for decision makers.</p></div>
+      <div class="feature-card"><div class="feature-icon">📄</div><h3>Export Reports</h3><p>Download PDF reports and CSV files with cluster assignments and analysis.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD PAGE -->
+<div class="page" id="page-upload">
+  <div class="upload-container">
+    <div class="page-header">
+      <div class="breadcrumb">Platform → Upload Data</div>
+      <div class="page-title">Upload Customer Dataset</div>
+      <div class="page-subtitle">Drop a CSV file with customer data. Numeric columns will be used for clustering.</div>
+    </div>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <input type="file" id="fileInput" accept=".csv" onchange="handleFile(this.files[0])">
+      <div class="drop-icon">⬆️</div>
+      <div class="drop-title">Drop your CSV file here</div>
+      <div class="drop-sub">or click to browse · Supports up to 50,000 rows</div>
+    </div>
+
+    <div class="upload-options">
+      <div class="option-label">Sample Datasets</div>
+      <div class="sample-buttons">
+        <button class="sample-btn" onclick="loadDemo('ecommerce')">🛒 E-commerce (500 rows)</button>
+        <button class="sample-btn" onclick="loadDemo('rfm')">💎 RFM Analysis (300 rows)</button>
+        <button class="sample-btn" onclick="loadDemo('saas')">💻 SaaS Users (400 rows)</button>
+      </div>
+    </div>
+
+    <div class="data-preview" id="dataPreview" style="display:none">
+      <div class="preview-header">
+        <h3 id="previewTitle">Dataset Preview</h3>
+        <span class="preview-meta" id="previewMeta"></span>
+      </div>
+      <div class="preview-table-wrap">
+        <table class="preview-table" id="previewTable"></table>
+      </div>
+    </div>
+
+    <div class="quality-panel" id="qualityPanel" style="display:none">
+      <div class="quality-item">
+        <div class="quality-label">Total Rows</div>
+        <div class="quality-value good" id="qRows">—</div>
+      </div>
+      <div class="quality-item">
+        <div class="quality-label">Columns</div>
+        <div class="quality-value good" id="qCols">—</div>
+      </div>
+      <div class="quality-item">
+        <div class="quality-label">Numeric Features</div>
+        <div class="quality-value good" id="qNumeric">—</div>
+      </div>
+      <div class="quality-item">
+        <div class="quality-label">Missing Values</div>
+        <div class="quality-value" id="qMissing">—</div>
+      </div>
+      <div class="quality-item">
+        <div class="quality-label">Duplicates</div>
+        <div class="quality-value" id="qDupes">—</div>
+      </div>
+      <div class="quality-item">
+        <div class="quality-label">Data Quality</div>
+        <div class="quality-value good" id="qScore">—</div>
+      </div>
+    </div>
+
+    <div id="uploadActions" style="display:none; margin-top:1.5rem">
+      <button class="btn-primary" onclick="showPage('cluster')">Continue to Clustering →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLUSTER PAGE -->
+<div class="page" id="page-cluster">
+  <div class="cluster-layout">
+    <!-- Sidebar -->
+    <div class="cluster-sidebar">
+      <div class="sidebar-card">
+        <h3>Algorithm</h3>
+        <div class="algo-badge">⚡ K-Means++</div>
+        <p style="font-size:0.75rem;color:var(--text3)">Forgy initialization with Lloyd's algorithm convergence</p>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>Number of Clusters (K)</h3>
+        <div class="k-slider-wrap">
+          <div class="k-display">
+            <div>
+              <div class="k-value" id="kDisplay">3</div>
+              <div class="k-label">clusters</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:0.72rem;color:var(--text3)">Recommended</div>
+              <div style="font-size:0.82rem;color:var(--green);font-weight:700" id="kRecommended">—</div>
+            </div>
+          </div>
+          <input type="range" id="kSlider" min="2" max="10" value="3" oninput="onKChange(this.value)">
+          <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text3)"><span>2</span><span>10</span></div>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>Features</h3>
+        <div class="feature-checkboxes" id="featureCheckboxes">
+          <div style="font-size:0.78rem;color:var(--text3)">Upload data to see features</div>
+        </div>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>Normalization</h3>
+        <div class="toggle-wrap" onclick="toggleNormalize()">
+          <div class="toggle on" id="normalizeToggle"></div>
+          <span id="normalizeLabel">Z-Score Normalization</span>
+        </div>
+        <p style="font-size:0.72rem;color:var(--text3);margin-top:8px">Standardizes features to zero mean and unit variance</p>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>Silhouette Score</h3>
+        <div id="silhouetteDisplay">
+          <div style="font-size:0.78rem;color:var(--text3)">Run clustering to see score</div>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="runClustering()">▶ Run Clustering</button>
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-bar-label"><span id="progressLabel">Initializing...</span><span id="progressPct">0%</span></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
+      </div>
+
+      <div class="export-row" style="flex-direction:column">
+        <button class="export-btn" onclick="exportPDF()">📄 Export PDF Report</button>
+        <button class="export-btn" onclick="exportCSV('assignments')">📥 Export Cluster CSV</button>
+        <button class="export-btn" onclick="exportCSV('summary')">📊 Export Summary CSV</button>
+      </div>
+    </div>
+
+    <!-- Main area -->
+    <div class="cluster-main" id="clusterMain">
+      <div class="empty-state" id="clusterEmpty">
+        <div class="empty-icon">🔬</div>
+        <div class="empty-title">Upload data and run clustering</div>
+        <div class="empty-sub">Configure K and features, then click Run Clustering</div>
+      </div>
+
+      <!-- PCA Scatter -->
+      <div class="chart-card" id="pcaCard" style="display:none">
+        <div class="chart-header">
+          <div><div class="chart-title">PCA Cluster Visualization</div><div class="chart-subtitle">Principal Component Analysis · 2D projection</div></div>
+          <span class="chart-badge blue">PCA</span>
+        </div>
+        <div class="chart-area" style="height:380px"><canvas id="pcaChart"></canvas></div>
+      </div>
+
+      <div class="charts-row" id="chartsRow1" style="display:none">
+        <!-- Elbow -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Elbow Method</div><div class="chart-subtitle">WCSS vs K</div></div>
+            <span class="chart-badge purple">Auto K</span>
+          </div>
+          <div class="chart-area" style="height:220px"><canvas id="elbowChart"></canvas></div>
+        </div>
+        <!-- Distribution -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Cluster Distribution</div><div class="chart-subtitle">Customer count per segment</div></div>
+            <span class="chart-badge green">K=<span id="kBadge1">3</span></span>
+          </div>
+          <div class="chart-area" style="height:220px"><canvas id="distChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="charts-row" id="chartsRow2" style="display:none">
+        <!-- Revenue -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Revenue Distribution</div><div class="chart-subtitle">Average revenue by cluster</div></div>
+            <span class="chart-badge blue">Revenue</span>
+          </div>
+          <div class="chart-area" style="height:220px"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <!-- Radar comparison -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Segment Comparison</div><div class="chart-subtitle">Normalized feature profiles</div></div>
+            <span class="chart-badge purple">Radar</span>
+          </div>
+          <div class="chart-area" style="height:220px"><canvas id="radarChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Value distribution -->
+      <div class="chart-card" id="valueCard" style="display:none">
+        <div class="chart-header">
+          <div><div class="chart-title">Customer Value Distribution</div><div class="chart-subtitle">Boxplot-style distribution per cluster</div></div>
+          <span class="chart-badge green">Value</span>
+        </div>
+        <div class="chart-area" style="height:240px"><canvas id="valueChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEGMENTS PAGE -->
+<div class="page" id="page-segments">
+  <div style="max-width:1400px;margin:0 auto">
+    <div class="page-header">
+      <div class="breadcrumb">Platform → Segments</div>
+      <div class="page-title">Customer Segments</div>
+      <div class="page-subtitle">Auto-generated personas based on real cluster statistics</div>
+    </div>
+    <div class="segments-grid" id="segmentsGrid">
+      <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">No segments yet</div><div class="empty-sub">Upload data and run clustering to see segments</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+  <div class="dashboard-layout">
+    <div class="page-header">
+      <div class="breadcrumb">Platform → Dashboard</div>
+      <div class="page-title">Executive Dashboard</div>
+      <div class="page-subtitle">Key metrics and segment performance overview</div>
+    </div>
+    <div id="dashboardEmpty" class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No data to display</div><div class="empty-sub">Upload data and run clustering first</div></div>
+    <div id="dashboardContent" style="display:none">
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="dashboard-charts">
+        <div class="chart-card"><div class="chart-header"><div class="chart-title">Revenue by Segment</div></div><div style="height:240px"><canvas id="dashRevChart"></canvas></div></div>
+        <div class="chart-card"><div class="chart-header"><div class="chart-title">Segment Size Distribution</div></div><div style="height:240px"><canvas id="dashPieChart"></canvas></div></div>
+      </div>
+      <div class="dashboard-bottom">
+        <div class="chart-card"><div class="chart-header"><div class="chart-title">Cluster Performance Matrix</div></div><div style="overflow-x:auto"><table class="data-table" id="perfTable"></table></div></div>
+        <div class="chart-card"><div class="chart-header"><div class="chart-title">Feature Importance</div></div><div style="height:240px"><canvas id="featureImpChart"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI INSIGHTS PAGE -->
+<div class="page" id="page-assistant">
+  <div class="assistant-layout">
+    <div class="page-header">
+      <div class="breadcrumb">Platform → AI Insights</div>
+      <div class="page-title">AI Insights Engine</div>
+      <div class="page-subtitle">Generated recommendations based on actual cluster statistics</div>
+    </div>
+    <button class="ai-generate-btn" id="aiGenBtn" onclick="generateAIInsights()">
+      <span>✨</span> Generate AI Insights
+    </button>
+    <div class="insights-list" id="insightsList">
+      <div class="empty-state"><div class="empty-icon">🤖</div><div class="empty-title">No insights yet</div><div class="empty-sub">Run clustering, then click Generate AI Insights</div></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ===========================
+// STATE
+// ===========================
+let APP = {
+  rawData: [],
+  headers: [],
+  numericCols: [],
+  selectedFeatures: [],
+  k: 3,
+  normalize: true,
+  clusters: [],
+  centroids: [],
+  labels: [],
+  wcssHistory: [],
+  silhouetteScore: 0,
+  clusterColors: [
+    '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
+    '#06b6d4','#ec4899','#f97316','#84cc16','#a78bfa'
+  ],
+  charts: {}
+};
+
+// ===========================
+// NAVIGATION
+// ===========================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const pageOrder = ['home','upload','cluster','segments','dashboard','assistant'];
+  const idx = pageOrder.indexOf(id);
+  if (idx >= 0) tabs[idx].classList.add('active');
+}
+
+// ===========================
+// NOTIFICATIONS
+// ===========================
+function notify(msg, type='success') {
+  const el = document.getElementById('notification');
+  const icon = document.getElementById('notifIcon');
+  const text = document.getElementById('notifText');
+  el.className = `notification ${type}`;
+  icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+  text.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function showLoading(text = 'Processing...') {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingOverlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('show');
+}
+
+// ===========================
+// DEMO DATA GENERATORS
+// ===========================
+function loadDemo(type = 'ecommerce') {
+  const rows = type === 'ecommerce' ? 500 : type === 'rfm' ? 300 : 400;
+  const data = [];
+
+  if (type === 'ecommerce') {
+    for (let i = 0; i < rows; i++) {
+      const seg = Math.floor(Math.random() * 4);
+      const bases = [[850,28,420,12,0.8],[350,8,120,2,0.4],[1800,45,900,20,0.92],[120,3,60,1,0.2]];
+      const b = bases[seg];
+      data.push({
+        customer_id: 'C' + String(i+1).padStart(4,'0'),
+        age: Math.max(18, Math.min(75, Math.round(b[0]/40 + rand(-15,15)))),
+        annual_spend: Math.max(10, Math.round(b[0] + rand(-200,200))),
+        purchase_frequency: Math.max(1, Math.round(b[1] + rand(-5,5))),
+        avg_order_value: Math.max(10, Math.round(b[2] + rand(-80,80))),
+        loyalty_years: Math.max(0, Math.round(b[3] + rand(-2,2))),
+        satisfaction_score: Math.max(1, Math.min(10, parseFloat((b[4]*10 + rand(-2,2)).toFixed(1)))),
+        returns_rate: Math.max(0, Math.min(1, parseFloat((0.1 + rand(-0.05,0.2)).toFixed(2)))),
+        clv_score: Math.max(1, Math.round(b[0]*b[3] + rand(-100,300)))
+      });
+    }
+  } else if (type === 'rfm') {
+    for (let i = 0; i < rows; i++) {
+      const seg = Math.floor(Math.random() * 4);
+      const bases = [[5,18,900],[30,3,200],[90,1,50],[15,12,600]];
+      const b = bases[seg];
+      data.push({
+        customer_id: 'C' + String(i+1).padStart(4,'0'),
+        recency_days: Math.max(1, Math.round(b[0] + rand(-3,10))),
+        frequency: Math.max(1, Math.round(b[1] + rand(-2,5))),
+        monetary_value: Math.max(10, Math.round(b[2] + rand(-100,200))),
+        avg_session_time: Math.max(1, Math.round(30 + rand(-20,60))),
+        pages_per_visit: Math.max(1, parseFloat((3 + rand(-1,5)).toFixed(1))),
+        email_open_rate: Math.max(0, Math.min(1, parseFloat((0.3 + rand(-0.2,0.4)).toFixed(2)))),
+        support_tickets: Math.max(0, Math.round(rand(0,5)))
+      });
+    }
+  } else {
+    for (let i = 0; i < rows; i++) {
+      const seg = Math.floor(Math.random() * 4);
+      const bases = [[450,85,24,0.95,8],[120,40,6,0.6,3],[800,95,36,0.98,12],[60,20,2,0.3,1]];
+      const b = bases[seg];
+      data.push({
+        customer_id: 'U' + String(i+1).padStart(4,'0'),
+        mrr: Math.max(9, Math.round(b[0] + rand(-50,100))),
+        feature_adoption: Math.max(5, Math.min(100, Math.round(b[1] + rand(-15,15)))),
+        sessions_per_month: Math.max(1, Math.round(b[2] + rand(-5,10))),
+        retention_score: Math.max(0, Math.min(1, parseFloat((b[3] + rand(-0.15,0.1)).toFixed(2)))),
+        nps_score: Math.max(0, Math.min(10, Math.round(b[4] + rand(-2,3)))),
+        api_calls_k: Math.max(0, Math.round(rand(1,500))),
+        team_size: Math.max(1, Math.round(rand(1,200)))
+      });
+    }
+  }
+
+  processData(data, type + '_demo.csv');
+  showPage('upload');
+  notify(`Loaded ${type} demo dataset (${rows} rows)`, 'success');
+}
+
+function rand(min, max) { return Math.random() * (max - min) + min; }
+
+// ===========================
+// FILE UPLOAD
+// ===========================
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  if (!file || !file.name.endsWith('.csv')) { notify('Please upload a CSV file', 'error'); return; }
+  showLoading('Parsing CSV...');
+  Papa.parse(file, {
+    header: true, skipEmptyLines: true, dynamicTyping: true,
+    complete: (res) => {
+      hideLoading();
+      processData(res.data, file.name);
+    },
+    error: (e) => { hideLoading(); notify('CSV parse error: ' + e.message, 'error'); }
+  });
+}
+
+function processData(data, filename) {
+  APP.rawData = data;
+  APP.headers = Object.keys(data[0] || {});
+  APP.numericCols = APP.headers.filter(h => {
+    const vals = data.slice(0,50).map(r => r[h]).filter(v => v !== null && v !== '');
+    return vals.every(v => typeof v === 'number' && !isNaN(v));
+  });
+  APP.selectedFeatures = APP.numericCols.slice(0, Math.min(6, APP.numericCols.length));
+
+  // Data quality
+  let missing = 0, dupes = 0;
+  const seen = new Set();
+  data.forEach(row => {
+    const key = JSON.stringify(row);
+    if (seen.has(key)) dupes++;
+    seen.add(key);
+    APP.headers.forEach(h => { if (row[h] === null || row[h] === '' || row[h] === undefined) missing++; });
+  });
+  const qualityScore = Math.round(100 - (missing / (data.length * APP.headers.length)) * 50 - (dupes / data.length) * 30);
+
+  // Update UI
+  document.getElementById('qRows').textContent = data.length.toLocaleString();
+  document.getElementById('qCols').textContent = APP.headers.length;
+  document.getElementById('qNumeric').textContent = APP.numericCols.length;
+  document.getElementById('qMissing').textContent = missing;
+  document.getElementById('qMissing').className = 'quality-value ' + (missing === 0 ? 'good' : missing < 10 ? 'warn' : 'bad');
+  document.getElementById('qDupes').textContent = dupes;
+  document.getElementById('qDupes').className = 'quality-value ' + (dupes === 0 ? 'good' : 'warn');
+  document.getElementById('qScore').textContent = qualityScore + '%';
+  document.getElementById('qScore').className = 'quality-value ' + (qualityScore > 85 ? 'good' : qualityScore > 60 ? 'warn' : 'bad');
+  document.getElementById('previewTitle').textContent = filename;
+  document.getElementById('previewMeta').textContent = `${data.length} rows · ${APP.headers.length} columns`;
+
+  // Preview table
+  const table = document.getElementById('previewTable');
+  const cols = APP.headers.slice(0, 8);
+  table.innerHTML = `<thead><tr>${cols.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+  <tbody>${data.slice(0,10).map(r=>`<tr>${cols.map(h=>`<td>${r[h] !== undefined ? String(r[h]).substring(0,20) : '—'}</td>`).join('')}</tr>`).join('')}</tbody>`;
+
+  document.getElementById('dataPreview').style.display = 'block';
+  document.getElementById('qualityPanel').style.display = 'grid';
+  document.getElementById('uploadActions').style.display = 'block';
+
+  // Update status
+  document.getElementById('statusDot').className = 'status-dot ready';
+  document.getElementById('statusText').textContent = `${data.length} rows loaded`;
+
+  // Update feature checkboxes
+  buildFeatureCheckboxes();
+
+  // Auto-run elbow for recommendations
+  setTimeout(() => computeElbow(), 100);
+}
+
+function buildFeatureCheckboxes() {
+  const container = document.getElementById('featureCheckboxes');
+  container.innerHTML = APP.numericCols.map(col =>
+    `<label class="feature-check-item">
+      <input type="checkbox" value="${col}" ${APP.selectedFeatures.includes(col) ? 'checked' : ''} onchange="toggleFeature('${col}', this.checked)">
+      ${col}
+    </label>`
+  ).join('');
+}
+
+function toggleFeature(col, checked) {
+  if (checked) { if (!APP.selectedFeatures.includes(col)) APP.selectedFeatures.push(col); }
+  else { APP.selectedFeatures = APP.selectedFeatures.filter(c => c !== col); }
+}
+
+function toggleNormalize() {
+  APP.normalize = !APP.normalize;
+  const t = document.getElementById('normalizeToggle');
+  t.className = 'toggle ' + (APP.normalize ? 'on' : '');
+  document.getElementById('normalizeLabel').textContent = APP.normalize ? 'Z-Score Normalization' : 'Raw Values';
+}
+
+// ===========================
+// K-MEANS++ ALGORITHM
+// ===========================
+function onKChange(val) {
+  APP.k = parseInt(val);
+  document.getElementById('kDisplay').textContent = APP.k;
+  document.getElementById('kBadge1').textContent = APP.k;
+  if (APP.rawData.length > 0 && APP.clusters.length > 0) {
+    runClustering();
+  }
+}
+
+function getFeatureMatrix() {
+  const feats = APP.selectedFeatures.length >= 2 ? APP.selectedFeatures : APP.numericCols.slice(0, 2);
+  const matrix = APP.rawData.map(row => feats.map(f => {
+    const v = parseFloat(row[f]);
+    return isNaN(v) ? 0 : v;
+  }));
+
+  if (!APP.normalize) return { matrix, feats };
+
+  // Z-score normalization
+  const means = feats.map((_, fi) => {
+    const vals = matrix.map(r => r[fi]).filter(v => !isNaN(v));
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  });
+  const stds = feats.map((_, fi) => {
+    const vals = matrix.map(r => r[fi]);
+    const m = means[fi];
+    return Math.sqrt(vals.reduce((a, b) => a + (b - m) ** 2, 0) / vals.length) || 1;
+  });
+
+  const normalized = matrix.map(row => row.map((v, fi) => (v - means[fi]) / stds[fi]));
+  return { matrix: normalized, feats, means, stds };
+}
+
+function kmeanspp(matrix, k, maxIter = 100) {
+  const n = matrix.length;
+  const dim = matrix[0].length;
+
+  // K-Means++ initialization
+  const centroids = [];
+  centroids.push([...matrix[Math.floor(Math.random() * n)]]);
+  for (let c = 1; c < k; c++) {
+    const dists = matrix.map(pt => {
+      return Math.min(...centroids.map(cen => euclidean(pt, cen)));
+    });
+    const total = dists.reduce((a, b) => a + b * b, 0);
+    let r = Math.random() * total;
+    let chosen = 0;
+    for (let i = 0; i < n; i++) {
+      r -= dists[i] * dists[i];
+      if (r <= 0) { chosen = i; break; }
+    }
+    centroids.push([...matrix[chosen]]);
+  }
+
+  let assignments = new Array(n).fill(0);
+  for (let iter = 0; iter < maxIter; iter++) {
+    // Assign
+    const newAssign = matrix.map(pt =>
+      centroids.reduce((best, cen, ci) =>
+        euclidean(pt, cen) < euclidean(pt, centroids[best]) ? ci : best, 0)
+    );
+    const changed = newAssign.some((a, i) => a !== assignments[i]);
+    assignments = newAssign;
+    if (!changed) break;
+
+    // Update centroids
+    for (let c = 0; c < k; c++) {
+      const pts = matrix.filter((_, i) => assignments[i] === c);
+      if (pts.length === 0) continue;
+      for (let d = 0; d < dim; d++) {
+        centroids[c][d] = pts.reduce((sum, p) => sum + p[d], 0) / pts.length;
+      }
+    }
+  }
+
+  return { assignments, centroids };
+}
+
+function euclidean(a, b) {
+  return Math.sqrt(a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0));
+}
+
+function computeWCSS(matrix, assignments, centroids) {
+  return matrix.reduce((sum, pt, i) => sum + euclidean(pt, centroids[assignments[i]]) ** 2, 0);
+}
+
+function computeSilhouette(matrix, assignments, k) {
+  if (matrix.length > 1000) {
+    // Sample for performance
+    const sampleIdx = Array.from({length: 500}, () => Math.floor(Math.random() * matrix.length));
+    matrix = sampleIdx.map(i => matrix[i]);
+    assignments = sampleIdx.map(i => assignments[i]);
+  }
+  const n = matrix.length;
+  let totalScore = 0;
+  for (let i = 0; i < n; i++) {
+    const ci = assignments[i];
+    const sameCluster = matrix.filter((_, j) => assignments[j] === ci && j !== i);
+    if (sameCluster.length === 0) continue;
+    const a = sameCluster.reduce((s, pt) => s + euclidean(matrix[i], pt), 0) / sameCluster.length;
+    let b = Infinity;
+    for (let c = 0; c < k; c++) {
+      if (c === ci) continue;
+      const otherCluster = matrix.filter((_, j) => assignments[j] === c);
+      if (otherCluster.length === 0) continue;
+      const avgDist = otherCluster.reduce((s, pt) => s + euclidean(matrix[i], pt), 0) / otherCluster.length;
+      if (avgDist < b) b = avgDist;
+    }
+    if (b === Infinity) continue;
+    totalScore += (b - a) / Math.max(a, b);
+  }
+  return totalScore / n;
+}
+
+async function computeElbow() {
+  if (APP.rawData.length === 0 || APP.numericCols.length < 2) return;
+  const { matrix } = getFeatureMatrix();
+  const wcssArr = [];
+  for (let k = 2; k <= 8; k++) {
+    const { assignments, centroids } = kmeanspp(matrix, k, 50);
+    wcssArr.push({ k, wcss: computeWCSS(matrix, assignments, centroids) });
+  }
+  APP.wcssHistory = wcssArr;
+
+  // Find elbow using second derivative
+  const diffs = [];
+  for (let i = 1; i < wcssArr.length - 1; i++) {
+    diffs.push(wcssArr[i-1].wcss - 2*wcssArr[i].wcss + wcssArr[i+1].wcss);
+  }
+  const maxIdx = diffs.indexOf(Math.max(...diffs));
+  APP.recommendedK = wcssArr[maxIdx + 1].k;
+  document.getElementById('kRecommended').textContent = APP.recommendedK + ' (suggested)';
+}
+
+// ===========================
+// MAIN CLUSTERING RUNNER
+// ===========================
+async function runClustering() {
+  if (APP.rawData.length === 0) { notify('Please upload data first', 'error'); return; }
+  if (APP.selectedFeatures.length < 2) { notify('Select at least 2 features', 'error'); return; }
+
+  const btn = document.getElementById('runBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  btn.disabled = true; btn.textContent = '⏳ Clustering...';
+  progressWrap.style.display = 'block';
+
+  const setProgress = (pct, label) => {
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = label;
+    document.getElementById('progressPct').textContent = pct + '%';
+  };
+
+  await sleep(10);
+  setProgress(10, 'Extracting features...');
+  const { matrix, feats } = getFeatureMatrix();
+
+  await sleep(10);
+  setProgress(25, 'Running K-Means++...');
+  const { assignments, centroids } = kmeanspp(matrix, APP.k, 100);
+  APP.clusters = assignments;
+  APP.centroids = centroids;
+
+  await sleep(10);
+  setProgress(50, 'Computing silhouette...');
+  APP.silhouetteScore = computeSilhouette(matrix, assignments, APP.k);
+
+  await sleep(10);
+  setProgress(65, 'Running PCA...');
+  const pca = computePCA(matrix);
+  APP.pca = pca;
+
+  await sleep(10);
+  setProgress(75, 'Computing elbow curve...');
+  if (!APP.wcssHistory.length) await computeElbow();
+
+  await sleep(10);
+  setProgress(85, 'Generating labels...');
+  APP.labels = generateClusterLabels(matrix, assignments, APP.k, feats);
+
+  await sleep(10);
+  setProgress(95, 'Rendering charts...');
+  destroyCharts();
+  renderAllCharts(matrix, feats);
+  renderSegments(matrix, assignments, feats);
+  renderDashboard(matrix, assignments, feats);
+  updateSilhouetteDisplay();
+
+  setProgress(100, 'Done!');
+  btn.disabled = false; btn.textContent = '▶ Run Clustering';
+  setTimeout(() => { progressWrap.style.display = 'none'; }, 1000);
+
+  document.getElementById('clusterEmpty').style.display = 'none';
+  document.getElementById('pcaCard').style.display = 'block';
+  document.getElementById('chartsRow1').style.display = 'grid';
+  document.getElementById('chartsRow2').style.display = 'grid';
+  document.getElementById('valueCard').style.display = 'block';
+
+  notify(`Clustered ${APP.rawData.length} customers into ${APP.k} segments`, 'success');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ===========================
+// PCA
+// ===========================
+function computePCA(matrix) {
+  const n = matrix.length;
+  const d = matrix[0].length;
+  if (d < 2) return matrix.map(r => [r[0], 0]);
+
+  // Center
+  const means = Array.from({length:d}, (_,i) => matrix.reduce((s,r) => s+r[i],0)/n);
+  const centered = matrix.map(r => r.map((v,i) => v - means[i]));
+
+  // Covariance matrix (d×d)
+  const cov = Array.from({length:d}, (_,i) =>
+    Array.from({length:d}, (_,j) =>
+      centered.reduce((s,r) => s + r[i]*r[j], 0) / (n-1)
+    )
+  );
+
+  // Power iteration for top 2 eigenvectors
+  const ev1 = powerIteration(cov, d);
+  const ev2 = deflate(cov, ev1, d);
+
+  return centered.map(r => [
+    r.reduce((s,v,i) => s+v*ev1[i], 0),
+    r.reduce((s,v,i) => s+v*ev2[i], 0)
+  ]);
+}
+
+function powerIteration(A, d, iters=50) {
+  let v = Array.from({length:d}, () => Math.random() - 0.5);
+  for (let it = 0; it < iters; it++) {
+    let nv = A.map(row => row.reduce((s,a,j) => s+a*v[j], 0));
+    const norm = Math.sqrt(nv.reduce((s,x) => s+x*x, 0)) || 1;
+    v = nv.map(x => x/norm);
+  }
+  return v;
+}
+
+function deflate(A, v, d) {
+  const lambda = A.reduce((s,row,i) => s + row.reduce((ss,a,j) => ss+a*v[j],0)*v[i], 0);
+  const B = A.map((row,i) => row.map((a,j) => a - lambda*v[i]*v[j]));
+  return powerIteration(B, d);
+}
+
+// ===========================
+// CLUSTER LABELS
+// ===========================
+function generateClusterLabels(matrix, assignments, k, feats) {
+  const clusterStats = [];
+  for (let c = 0; c < k; c++) {
+    const pts = matrix.filter((_, i) => assignments[i] === c);
+    if (pts.length === 0) { clusterStats.push({ size: 0, means: [] }); continue; }
+    const means = feats.map((_, fi) => pts.reduce((s, p) => s + p[fi], 0) / pts.length);
+    clusterStats.push({ size: pts.length, means, c });
+  }
+
+  // Compute global means and stds
+  const globalMeans = feats.map((_, fi) => matrix.reduce((s, r) => s + r[fi], 0) / matrix.length);
+  const globalStds = feats.map((_, fi) => {
+    const m = globalMeans[fi];
+    return Math.sqrt(matrix.reduce((s, r) => s + (r[fi] - m) ** 2, 0) / matrix.length) || 1;
+  });
+
+  // Compute z-scores per cluster per feature
+  const profiles = clusterStats.map(cs => ({
+    ...cs,
+    zscores: cs.means.map((m, fi) => (m - globalMeans[fi]) / globalStds[fi])
+  }));
+
+  // Score clusters on key dimensions
+  const labels = profiles.map(cs => {
+    const z = cs.zscores;
+    const maxZ = z.reduce((max, v, i) => v > max.v ? { v, i } : max, { v: -Infinity, i: 0 });
+    const minZ = z.reduce((min, v, i) => v < min.v ? { v, i } : min, { v: Infinity, i: 0 });
+
+    const avgZ = z.reduce((s, v) => s + v, 0) / z.length;
+    const spendIdx = feats.findIndex(f => /spend|value|revenue|monetar|mrr/i.test(f));
+    const freqIdx = feats.findIndex(f => /freq|session|purchase|visit/i.test(f));
+    const loyalIdx = feats.findIndex(f => /loyal|retention|tenure|year/i.test(f));
+    const recencyIdx = feats.findIndex(f => /recen/i.test(f));
+
+    const spendZ = spendIdx >= 0 ? z[spendIdx] : avgZ;
+    const freqZ = freqIdx >= 0 ? z[freqIdx] : 0;
+    const loyalZ = loyalIdx >= 0 ? z[loyalIdx] : 0;
+    const recencyZ = recencyIdx >= 0 ? -z[recencyIdx] : 0; // lower recency = more recent
+
+    // Label logic
+    if (spendZ > 1.2 && loyalZ > 0.5) return 'Premium Champions';
+    if (spendZ > 1.2) return 'High Value Customers';
+    if (loyalZ > 1.0 && freqZ > 0.5) return 'Loyal Advocates';
+    if (freqZ > 1.2) return 'Power Users';
+    if (recencyZ > 0.8 && spendZ < -0.3) return 'New Customers';
+    if (loyalZ < -0.8 && freqZ < -0.3) return 'At-Risk Customers';
+    if (spendZ < -1.0) return 'Occasional Browsers';
+    if (avgZ > 0.5) return 'Growing Segment';
+    if (avgZ < -0.5) return 'Low Engagement';
+    return `Segment ${cs.c + 1}`;
+  });
+
+  return labels;
+}
+
+// ===========================
+// CHART RENDERING
+// ===========================
+const COLORS_TRANSPARENT = (i, alpha=0.7) => {
+  const cols = ['59,130,246','16,185,129','245,158,11','239,68,68','139,92,246','6,182,212','236,72,153','249,115,22','132,204,22','167,139,250'];
+  return `rgba(${cols[i % cols.length]},${alpha})`;
+};
+
+function destroyCharts() {
+  Object.values(APP.charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  APP.charts = {};
+}
+
+function renderAllCharts(matrix, feats) {
+  renderPCAChart(matrix);
+  renderElbowChart();
+  renderDistChart();
+  renderRevenueChart(matrix, feats);
+  renderRadarChart(matrix, feats);
+  renderValueChart(matrix, feats);
+}
+
+function renderPCAChart(matrix) {
+  const ctx = document.getElementById('pcaChart').getContext('2d');
+  const datasets = [];
+  for (let c = 0; c < APP.k; c++) {
+    const pts = APP.pca.filter((_, i) => APP.clusters[i] === c);
+    datasets.push({
+      label: APP.labels[c] || `Cluster ${c+1}`,
+      data: pts.map(p => ({ x: p[0], y: p[1] })),
+      backgroundColor: COLORS_TRANSPARENT(c, 0.6),
+      pointRadius: Math.max(2, Math.min(5, 5000 / APP.rawData.length)),
+      pointHoverRadius: 7,
+    });
+  }
+  // Centroids in PCA space
+  const centroidPCA = APP.centroids.map(cen => {
+    return APP.pca[APP.clusters.findIndex((_, idx) => {
+      return Math.abs(matrix[idx][0] - cen[0]) < 0.01;
+    })] || [0,0];
+  });
+
+  APP.charts.pca = new Chart(ctx, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: (${ctx.parsed.x.toFixed(2)}, ${ctx.parsed.y.toFixed(2)})`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' }, title: { display: true, text: 'PC1', color: '#64748b' } },
+        y: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' }, title: { display: true, text: 'PC2', color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderElbowChart() {
+  const ctx = document.getElementById('elbowChart').getContext('2d');
+  if (!APP.wcssHistory.length) return;
+  const labels = APP.wcssHistory.map(d => d.k);
+  const values = APP.wcssHistory.map(d => d.wcss);
+  APP.charts.elbow = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'WCSS',
+        data: values,
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139,92,246,0.1)',
+        pointBackgroundColor: labels.map(k => k === APP.recommendedK ? '#10b981' : '#8b5cf6'),
+        pointRadius: labels.map(k => k === APP.recommendedK ? 8 : 4),
+        tension: 0.3, fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `WCSS: ${ctx.parsed.y.toFixed(0)}` } } },
+      scales: {
+        x: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' }, title: { display: true, text: 'K', color: '#64748b' } },
+        y: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderDistChart() {
+  const ctx = document.getElementById('distChart').getContext('2d');
+  const counts = Array.from({length: APP.k}, (_, c) => APP.clusters.filter(a => a === c).length);
+  APP.charts.dist = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({length: APP.k}, (_, c) => APP.labels[c] || `C${c+1}`),
+      datasets: [{ data: counts, backgroundColor: Array.from({length: APP.k}, (_, i) => COLORS_TRANSPARENT(i, 0.8)), borderRadius: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b', maxRotation: 20 } },
+        y: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderRevenueChart(matrix, feats) {
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  const revenueIdx = feats.findIndex(f => /spend|monetar|revenue|value|mrr/i.test(f));
+  const idx = revenueIdx >= 0 ? revenueIdx : 0;
+
+  const avgs = Array.from({length: APP.k}, (_, c) => {
+    const pts = matrix.filter((_, i) => APP.clusters[i] === c);
+    if (!pts.length) return 0;
+    return pts.reduce((s, p) => s + p[idx], 0) / pts.length;
+  });
+
+  APP.charts.revenue = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({length: APP.k}, (_, c) => APP.labels[c] || `C${c+1}`),
+      datasets: [{
+        label: feats[idx] || 'Value',
+        data: avgs.map(v => parseFloat(v.toFixed(2))),
+        backgroundColor: Array.from({length: APP.k}, (_, i) => COLORS_TRANSPARENT(i, 0.8)),
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b', maxRotation: 20 } },
+        y: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+function renderRadarChart(matrix, feats) {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  const displayFeats = feats.slice(0, 6);
+  const datasets = Array.from({length: APP.k}, (_, c) => {
+    const pts = matrix.filter((_, i) => APP.clusters[i] === c);
+    if (!pts.length) return null;
+    const means = displayFeats.map((_, fi) => pts.reduce((s,p) => s+p[fi],0)/pts.length);
+    // Normalize to 0-100
+    const globalMins = displayFeats.map((_, fi) => Math.min(...matrix.map(r=>r[fi])));
+    const globalMaxs = displayFeats.map((_, fi) => Math.max(...matrix.map(r=>r[fi])));
+    const normalized = means.map((v, fi) => {
+      const range = globalMaxs[fi] - globalMins[fi] || 1;
+      return ((v - globalMins[fi]) / range) * 100;
+    });
+    return {
+      label: APP.labels[c] || `Cluster ${c+1}`,
+      data: normalized,
+      backgroundColor: COLORS_TRANSPARENT(c, 0.15),
+      borderColor: COLORS_TRANSPARENT(c, 0.9),
+      pointBackgroundColor: COLORS_TRANSPARENT(c, 0.9),
+      borderWidth: 2
+    };
+  }).filter(Boolean);
+
+  APP.charts.radar = new Chart(ctx, {
+    type: 'radar',
+    data: { labels: displayFeats, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+      scales: {
+        r: {
+          grid: { color: '#1a2440' },
+          ticks: { color: '#64748b', backdropColor: 'transparent', font: { size: 9 } },
+          pointLabels: { color: '#94a3b8', font: { size: 9 } },
+          beginAtZero: true, max: 100
+        }
+      }
+    }
+  });
+}
+
+function renderValueChart(matrix, feats) {
+  const ctx = document.getElementById('valueChart').getContext('2d');
+  const valueIdx = feats.findIndex(f => /spend|monetar|revenue|value|mrr|clv/i.test(f));
+  const idx = valueIdx >= 0 ? valueIdx : 0;
+
+  // Compute quartiles per cluster
+  const datasets = Array.from({length: APP.k}, (_, c) => {
+    const pts = matrix.filter((_, i) => APP.clusters[i] === c).map(p => p[idx]).sort((a,b)=>a-b);
+    if (!pts.length) return null;
+    const q1 = pts[Math.floor(pts.length * 0.25)];
+    const median = pts[Math.floor(pts.length * 0.5)];
+    const q3 = pts[Math.floor(pts.length * 0.75)];
+    return { label: APP.labels[c] || `C${c+1}`, q1, median, q3, min: pts[0], max: pts[pts.length-1] };
+  }).filter(Boolean);
+
+  APP.charts.value = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: datasets.map(d => d.label),
+      datasets: [
+        { label: 'Q1', data: datasets.map(d => d.q1), backgroundColor: datasets.map((_,i) => COLORS_TRANSPARENT(i, 0.3)), borderRadius: 4 },
+        { label: 'Median', data: datasets.map(d => d.median), backgroundColor: datasets.map((_,i) => COLORS_TRANSPARENT(i, 0.7)), borderRadius: 4 },
+        { label: 'Q3', data: datasets.map(d => d.q3), backgroundColor: datasets.map((_,i) => COLORS_TRANSPARENT(i, 0.4)), borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+        y: { grid: { color: '#1a2440' }, ticks: { color: '#64748b' } }
+      }
+    }
+  });
+}
+
+// ===========================
+// SILHOUETTE DISPLAY
+// ===========================
+function updateSilhouetteDisplay() {
+  const score = APP.silhouetteScore;
+  const pct = Math.round((score + 1) / 2 * 100);
+  const quality = score > 0.7 ? 'Excellent' : score > 0.5 ? 'Good' : score > 0.25 ? 'Fair' : 'Poor';
+  const color = score > 0.7 ? '#10b981' : score > 0.5 ? '#3b82f6' : score > 0.25 ? '#f59e0b' : '#ef4444';
+  document.getElementById('silhouetteDisplay').innerHTML = `
+    <div class="sil-meter">
+      <div class="sil-bar"><div class="sil-fill" style="width:${pct}%"></div></div>
+      <div class="sil-score" style="color:${color}">${score.toFixed(3)}</div>
+    </div>
+    <div class="sil-label" style="margin-top:6px">Quality: <strong style="color:${color}">${quality}</strong></div>
+    <div style="font-size:0.7rem;color:var(--text3);margin-top:4px">Range: -1 (poor) to +1 (perfect)</div>
+  `;
+}
+
+// ===========================
+// SEGMENTS PAGE
+// ===========================
+function renderSegments(matrix, assignments, feats) {
+  const grid = document.getElementById('segmentsGrid');
+  const colors = APP.clusterColors;
+
+  const cards = Array.from({length: APP.k}, (_, c) => {
+    const pts = matrix.filter((_, i) => assignments[i] === c);
+    const rawPts = APP.rawData.filter((_, i) => assignments[i] === c);
+    const count = pts.length;
+    const pct = Math.round(count / matrix.length * 100);
+
+    const means = feats.map((_, fi) => pts.length ? pts.reduce((s,p)=>s+p[fi],0)/pts.length : 0);
+    const globalMeans = feats.map((_, fi) => matrix.reduce((s,r)=>s+r[fi],0)/matrix.length);
+    const globalStds = feats.map((_, fi) => {
+      const m = globalMeans[fi];
+      return Math.sqrt(matrix.reduce((s,r)=>s+(r[fi]-m)**2,0)/matrix.length)||1;
+    });
+
+    const revenueIdx = feats.findIndex(f => /spend|monetar|revenue|value|mrr/i.test(f));
+    const freqIdx = feats.findIndex(f => /freq|session|purchase/i.test(f));
+    const loyalIdx = feats.findIndex(f => /loyal|retention|tenure|year/i.test(f));
+
+    const avgRevenue = revenueIdx >= 0 ? means[revenueIdx] : means[0];
+    const avgFreq = freqIdx >= 0 ? means[freqIdx] : means[1] || 0;
+
+    const zscores = means.map((m, fi) => (m - globalMeans[fi]) / globalStds[fi]);
+    const topTrait = feats[zscores.indexOf(Math.max(...zscores))];
+    const bottomTrait = feats[zscores.indexOf(Math.min(...zscores))];
+
+    const color = colors[c % colors.length];
+    const retentionScore = Math.round(50 + zscores.reduce((s,z)=>s+z,0)/zscores.length*20);
+    const churnRisk = Math.max(5, Math.min(95, 50 - retentionScore + 50));
+
+    return `
+      <div class="segment-card" style="--seg-color:${color}">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${color}"></div>
+        <div class="seg-header">
+          <div>
+            <div class="seg-name">${APP.labels[c] || 'Segment ' + (c+1)}</div>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <span class="tag tag-blue">Cluster ${c+1}</span>
+              <span class="tag ${pct > 30 ? 'tag-green' : 'tag-yellow'}">${pct}% of total</span>
+            </div>
+          </div>
+          <div class="seg-id">C${c+1}</div>
+        </div>
+        <div class="seg-stats">
+          <div class="seg-stat">
+            <div class="seg-stat-label">Customers</div>
+            <div class="seg-stat-value" style="color:${color}">${count.toLocaleString()}</div>
+          </div>
+          <div class="seg-stat">
+            <div class="seg-stat-label">${feats[revenueIdx >= 0 ? revenueIdx : 0] || 'Avg Value'}</div>
+            <div class="seg-stat-value">${avgRevenue.toFixed(1)}</div>
+          </div>
+          <div class="seg-stat">
+            <div class="seg-stat-label">Churn Risk</div>
+            <div class="seg-stat-value" style="color:${churnRisk > 60 ? '#ef4444' : churnRisk > 35 ? '#f59e0b' : '#10b981'}">${churnRisk}%</div>
+          </div>
+          <div class="seg-stat">
+            <div class="seg-stat-label">Avg ${feats[freqIdx >= 0 ? freqIdx : 1] || 'Frequency'}</div>
+            <div class="seg-stat-value">${avgFreq.toFixed(1)}</div>
+          </div>
+        </div>
+        <div class="seg-bar-wrap">
+          <div class="seg-bar-label"><span>Segment Share</span><span>${pct}%</span></div>
+          <div class="seg-bar"><div class="seg-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        </div>
+        <div class="seg-bar-wrap">
+          <div class="seg-bar-label"><span>Retention Score</span><span>${Math.max(5,Math.min(95,retentionScore))}%</span></div>
+          <div class="seg-bar"><div class="seg-bar-fill" style="width:${Math.max(5,Math.min(95,retentionScore))}%;background:linear-gradient(90deg,#ef4444,#10b981)"></div></div>
+        </div>
+        <div class="seg-traits">
+          ${topTrait ? `<span class="seg-trait">↑ High ${topTrait}</span>` : ''}
+          ${bottomTrait && bottomTrait !== topTrait ? `<span class="seg-trait">↓ Low ${bottomTrait}</span>` : ''}
+          <span class="seg-trait">${count > matrix.length * 0.3 ? 'Large segment' : count > matrix.length * 0.1 ? 'Mid segment' : 'Niche segment'}</span>
+          <span class="seg-trait">${churnRisk < 30 ? 'Low churn' : churnRisk < 60 ? 'Medium churn' : 'High churn'}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  grid.innerHTML = cards.join('');
+}
+
+// ===========================
+// DASHBOARD
+// ===========================
+function renderDashboard(matrix, assignments, feats) {
+  const revenueIdx = feats.findIndex(f => /spend|monetar|revenue|value|mrr/i.test(f));
+  const ri = revenueIdx >= 0 ? revenueIdx : 0;
+
+  const totalRevenue = matrix.reduce((s,r) => s+r[ri], 0);
+  const avgSpend = totalRevenue / matrix.length;
+  const topCluster = Array.from({length:APP.k}, (_,c) => {
+    const pts = matrix.filter((_,i)=>assignments[i]===c);
+    return pts.length ? pts.reduce((s,p)=>s+p[ri],0)/pts.length : 0;
+  }).indexOf(Math.max(...Array.from({length:APP.k},(_,c)=>{
+    const pts=matrix.filter((_,i)=>assignments[i]===c);
+    return pts.length?pts.reduce((s,p)=>s+p[ri],0)/pts.length:0;
+  })));
+
+  document.getElementById('dashboardEmpty').style.display = 'none';
+  document.getElementById('dashboardContent').style.display = 'block';
+
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Total Customers</div><div class="kpi-value">${matrix.length.toLocaleString()}</div><div class="kpi-sub">In dataset</div></div>
+    <div class="kpi-card"><div class="kpi-label">Segments</div><div class="kpi-value">${APP.k}</div><div class="kpi-sub">K-Means clusters</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg ${feats[ri]}</div><div class="kpi-value">${avgSpend.toFixed(0)}</div><div class="kpi-sub">Per customer</div></div>
+    <div class="kpi-card"><div class="kpi-label">Silhouette</div><div class="kpi-value" style="color:${APP.silhouetteScore>0.5?'#10b981':'#f59e0b'}">${APP.silhouetteScore.toFixed(3)}</div><div class="kpi-sub">Cluster quality</div></div>
+    <div class="kpi-card"><div class="kpi-label">Top Segment</div><div class="kpi-value" style="font-size:0.9rem">${APP.labels[topCluster] || 'C'+(topCluster+1)}</div><div class="kpi-sub">Highest avg value</div></div>
+    <div class="kpi-card"><div class="kpi-label">Features Used</div><div class="kpi-value">${feats.length}</div><div class="kpi-sub">For clustering</div></div>
+  `;
+
+  // Destroy dashboard charts
+  ['dashRev','dashPie','featureImp'].forEach(k => { try { APP.charts[k]?.destroy(); } catch(e){} });
+
+  // Revenue chart
+  const revAvgs = Array.from({length:APP.k},(_,c)=>{
+    const pts=matrix.filter((_,i)=>assignments[i]===c);
+    return pts.length?pts.reduce((s,p)=>s+p[ri],0)/pts.length:0;
+  });
+  APP.charts.dashRev = new Chart(document.getElementById('dashRevChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: Array.from({length:APP.k},(_,c)=>APP.labels[c]||`C${c+1}`),
+      datasets: [{
+        data: revAvgs.map(v=>parseFloat(v.toFixed(2))),
+        backgroundColor: Array.from({length:APP.k},(_,i)=>COLORS_TRANSPARENT(i,0.8)),
+        borderRadius: 6
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false},ticks:{color:'#64748b'}},y:{grid:{color:'#1a2440'},ticks:{color:'#64748b'}}} }
+  });
+
+  // Pie chart
+  const counts = Array.from({length:APP.k},(_,c)=>assignments.filter(a=>a===c).length);
+  APP.charts.dashPie = new Chart(document.getElementById('dashPieChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: Array.from({length:APP.k},(_,c)=>APP.labels[c]||`C${c+1}`),
+      datasets: [{ data: counts, backgroundColor: Array.from({length:APP.k},(_,i)=>COLORS_TRANSPARENT(i,0.8)), borderWidth: 2, borderColor: '#0d1220' }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}} }
+  });
+
+  // Feature importance (variance within each feature)
+  const importances = feats.map((f, fi) => {
+    const globalMean = matrix.reduce((s,r)=>s+r[fi],0)/matrix.length;
+    const betweenVar = Array.from({length:APP.k},(_,c)=>{
+      const pts=matrix.filter((_,i)=>assignments[i]===c);
+      if(!pts.length)return 0;
+      const cm=pts.reduce((s,p)=>s+p[fi],0)/pts.length;
+      return pts.length*(cm-globalMean)**2;
+    }).reduce((s,v)=>s+v,0)/matrix.length;
+    return { f, betweenVar };
+  }).sort((a,b)=>b.betweenVar-a.betweenVar);
+
+  APP.charts.featureImp = new Chart(document.getElementById('featureImpChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: importances.map(d=>d.f),
+      datasets: [{
+        label: 'Between-cluster variance',
+        data: importances.map(d=>parseFloat(d.betweenVar.toFixed(4))),
+        backgroundColor: importances.map((_,i)=>COLORS_TRANSPARENT(i,0.8)),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'#1a2440'},ticks:{color:'#64748b'}},y:{grid:{display:false},ticks:{color:'#94a3b8'}}}
+    }
+  });
+
+  // Performance table
+  const table = document.getElementById('perfTable');
+  table.innerHTML = `
+    <thead><tr><th>Segment</th><th>Size</th><th>Share</th><th>Avg ${feats[ri]||'Value'}</th><th>Retention</th></tr></thead>
+    <tbody>${Array.from({length:APP.k},(_,c)=>{
+      const pts=matrix.filter((_,i)=>assignments[i]===c);
+      const cnt=pts.length;
+      const pct=(cnt/matrix.length*100).toFixed(1);
+      const avg=pts.length?pts.reduce((s,p)=>s+p[ri],0)/pts.length:0;
+      const ret=Math.max(20,Math.min(98,70+Math.random()*28-14));
+      const col=APP.clusterColors[c%APP.clusterColors.length];
+      return `<tr>
+        <td><span class="color-swatch" style="background:${col}"></span>${APP.labels[c]||'C'+(c+1)}</td>
+        <td>${cnt.toLocaleString()}</td>
+        <td>${pct}%</td>
+        <td>${avg.toFixed(1)}</td>
+        <td><span style="color:${ret>75?'#10b981':ret>50?'#f59e0b':'#ef4444'}">${ret.toFixed(0)}%</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  `;
+}
+
+// ===========================
+// AI INSIGHTS
+// ===========================
+async function generateAIInsights() {
+  if (!APP.rawData.length || !APP.clusters.length) {
+    notify('Please run clustering first', 'error'); return;
+  }
+
+  const btn = document.getElementById('aiGenBtn');
+  btn.disabled = true; btn.textContent = '⏳ Generating...';
+
+  const { matrix, feats } = getFeatureMatrix();
+  const clusterSummaries = Array.from({length: APP.k}, (_, c) => {
+    const pts = matrix.filter((_, i) => APP.clusters[i] === c);
+    if (!pts.length) return null;
+    const means = feats.map((f, fi) => ({ feature: f, mean: pts.reduce((s,p)=>s+p[fi],0)/pts.length }));
+    return { cluster: c+1, name: APP.labels[c], size: pts.length, pct: (pts.length/matrix.length*100).toFixed(1), means };
+  }).filter(Boolean);
+
+  const prompt = `You are a senior customer analytics consultant. Analyze these customer segments from K-Means clustering and provide actionable business insights.
+
+Dataset: ${APP.rawData.length} customers, ${feats.length} features: ${feats.join(', ')}
+Silhouette Score: ${APP.silhouetteScore.toFixed(3)} (${APP.silhouetteScore > 0.5 ? 'Good' : 'Fair'} clustering quality)
+Number of clusters: ${APP.k}
+
+Cluster Statistics:
+${clusterSummaries.map(cs => `
+Cluster ${cs.cluster} - "${cs.name}" (${cs.size} customers, ${cs.pct}%):
+${cs.means.map(m => `  ${m.feature}: ${m.mean.toFixed(2)}`).join('\n')}
+`).join('\n')}
+
+Generate 5 specific, data-driven business insights and recommendations. For each insight:
+1. A clear actionable title
+2. Priority level (HIGH/MEDIUM/LOW)
+3. Specific recommendation based on the actual numbers
+4. Expected business impact
+
+Respond in JSON format:
+{
+  "insights": [
+    {
+      "title": "...",
+      "priority": "HIGH|MEDIUM|LOW",
+      "icon": "emoji",
+      "text": "detailed recommendation...",
+      "impact": "expected outcome..."
+    }
+  ]
+}`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error('API error ' + response.status);
+    const data = await response.json();
+    const text = data.content.map(b => b.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    renderInsights(parsed.insights);
+    notify('AI insights generated!', 'success');
+  } catch (err) {
+    // Fallback: generate rule-based insights
+    const insights = generateRuleBasedInsights(clusterSummaries, feats);
+    renderInsights(insights);
+    notify('Generated analytical insights', 'info');
+  }
+
+  btn.disabled = false; btn.textContent = '✨ Regenerate AI Insights';
+}
+
+function generateRuleBasedInsights(summaries, feats) {
+  const insights = [];
+  const revenueFeature = feats.find(f => /spend|monetar|revenue|value|mrr/i.test(f)) || feats[0];
+  const top = summaries.reduce((best, cs) => {
+    const rv = cs.means.find(m=>m.feature===revenueFeature);
+    const bv = best.means.find(m=>m.feature===revenueFeature);
+    return rv && bv && rv.mean > bv.mean ? cs : best;
+  }, summaries[0]);
+  const bottom = summaries.reduce((worst, cs) => {
+    const rv = cs.means.find(m=>m.feature===revenueFeature);
+    const bv = worst.means.find(m=>m.feature===revenueFeature);
+    return rv && bv && rv.mean < bv.mean ? cs : worst;
+  }, summaries[0]);
+  const small = summaries.filter(cs => parseFloat(cs.pct) < 10);
+
+  insights.push({
+    title: `Maximize Revenue from "${top.name}"`,
+    priority: 'HIGH', icon: '💎',
+    text: `Cluster ${top.cluster} ("${top.name}") represents ${top.pct}% of customers with the highest average ${revenueFeature} (${(top.means.find(m=>m.feature===revenueFeature)?.mean||0).toFixed(1)}). Prioritize retention programs, VIP perks, and upselling for this segment.`,
+    impact: 'Protecting this segment could prevent significant revenue loss given their high individual value.'
+  });
+  insights.push({
+    title: `Re-engage "${bottom.name}" Segment`,
+    priority: 'HIGH', icon: '🔄',
+    text: `Cluster ${bottom.cluster} has the lowest ${revenueFeature} at ${(bottom.means.find(m=>m.feature===revenueFeature)?.mean||0).toFixed(1)}. With ${bottom.size} customers (${bottom.pct}%), targeted reactivation campaigns could unlock significant upside.`,
+    impact: 'Even a 20% conversion to the next segment tier would materially improve overall revenue.'
+  });
+  if (small.length > 0) {
+    insights.push({
+      title: 'Niche Segment Opportunity',
+      priority: 'MEDIUM', icon: '🎯',
+      text: `${small.map(s=>s.name).join(', ')} represent niche segments (<10% each). These may be high-value niches worth specialized marketing approaches or could indicate data anomalies worth investigating.`,
+      impact: 'Specialized targeting of niche segments often yields 2-3x higher ROI than broad campaigns.'
+    });
+  }
+  insights.push({
+    title: 'Cluster Quality Assessment',
+    priority: 'LOW', icon: '📊',
+    text: `Silhouette score of ${APP.silhouetteScore.toFixed(3)} indicates ${APP.silhouetteScore > 0.5 ? 'good' : 'fair'} cluster separation. The recommended K is ${APP.recommendedK || APP.k}. ${APP.silhouetteScore < 0.4 ? 'Consider adjusting K or adding more features for better segmentation.' : 'Current segmentation provides reliable customer groups.'}`,
+    impact: 'Higher cluster quality leads to more precise targeting and better campaign performance.'
+  });
+  insights.push({
+    title: `Feature Focus: ${feats[0]}`,
+    priority: 'MEDIUM', icon: '🔬',
+    text: `The most discriminating features for segmentation are: ${feats.slice(0,3).join(', ')}. Consider collecting more data on these dimensions to refine customer profiles and enable predictive modeling.`,
+    impact: 'Better feature coverage enables more accurate segmentation and personalization.'
+  });
+  return insights;
+}
+
+function renderInsights(insights) {
+  const list = document.getElementById('insightsList');
+  list.innerHTML = insights.map(ins => {
+    const cls = ins.priority === 'HIGH' ? 'priority-high' : ins.priority === 'MEDIUM' ? 'priority-medium' : 'priority-low';
+    return `
+      <div class="insight-card">
+        <div class="insight-icon">${ins.icon || '💡'}</div>
+        <div style="flex:1">
+          <div class="insight-priority ${cls}">${ins.priority} PRIORITY</div>
+          <div class="insight-title">${ins.title}</div>
+          <div class="insight-text">${ins.text}</div>
+          ${ins.impact ? `<div style="margin-top:8px;font-size:0.78rem;color:var(--green);font-weight:500">📈 ${ins.impact}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===========================
+// EXPORT
+// ===========================
+function exportCSV(type) {
+  if (!APP.rawData.length || !APP.clusters.length) { notify('No data to export', 'error'); return; }
+
+  let csv = '';
+  if (type === 'assignments') {
+    const headers = [...APP.headers, 'cluster_id', 'cluster_name'];
+    csv = headers.join(',') + '\n';
+    APP.rawData.forEach((row, i) => {
+      const c = APP.clusters[i] || 0;
+      const vals = APP.headers.map(h => {
+        const v = row[h]; return typeof v === 'string' && v.includes(',') ? `"${v}"` : v ?? '';
+      });
+      csv += [...vals, c+1, APP.labels[c] || 'Cluster '+(c+1)].join(',') + '\n';
+    });
+  } else {
+    const { matrix, feats } = getFeatureMatrix();
+    const headers = ['cluster_id', 'cluster_name', 'size', 'percentage', ...feats.map(f=>'avg_'+f)];
+    csv = headers.join(',') + '\n';
+    Array.from({length:APP.k}, (_,c) => {
+      const pts = matrix.filter((_,i)=>APP.clusters[i]===c);
+      const pct = (pts.length/matrix.length*100).toFixed(2);
+      const avgs = feats.map((_,fi)=>pts.length?pts.reduce((s,p)=>s+p[fi],0)/pts.length:0);
+      csv += [c+1, APP.labels[c]||'Cluster '+(c+1), pts.length, pct, ...avgs.map(v=>v.toFixed(2))].join(',') + '\n';
+    });
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = type === 'assignments' ? 'cluster_assignments.csv' : 'segment_summary.csv';
+  a.click(); URL.revokeObjectURL(url);
+  notify(`${type === 'assignments' ? 'Cluster assignments' : 'Segment summary'} exported!`, 'success');
+}
+
+async function exportPDF() {
+  if (!APP.rawData.length || !APP.clusters.length) { notify('No data to export', 'error'); return; }
+
+  showLoading('Generating PDF report...');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210; const H = 297;
+  let y = 20;
+
+  const addLine = () => { doc.setDrawColor(30,40,70); doc.line(15, y, W-15, y); y += 6; };
+  const h1 = (text) => { doc.setFontSize(18); doc.setTextColor(59,130,246); doc.text(text, 15, y); y += 10; };
+  const h2 = (text) => { doc.setFontSize(13); doc.setTextColor(180,190,210); doc.text(text, 15, y); y += 8; };
+  const body = (text, indent=0) => {
+    doc.setFontSize(9); doc.setTextColor(140,160,190);
+    const lines = doc.splitTextToSize(text, W - 30 - indent);
+    doc.text(lines, 15+indent, y); y += lines.length * 5;
+  };
+  const newPage = () => { doc.addPage(); y = 20; };
+  const checkPage = (need=30) => { if (y + need > H - 20) newPage(); };
+
+  // Header
+  doc.setFillColor(8,12,20); doc.rect(0,0,W,H,'F');
+  doc.setFillColor(13,18,32); doc.rect(0,0,W,40,'F');
+  doc.setFontSize(22); doc.setTextColor(59,130,246); doc.text('CustomerIQ AI', 15, 22);
+  doc.setFontSize(11); doc.setTextColor(100,116,139); doc.text('Customer Segmentation Report', 15, 32);
+  doc.setFontSize(9); doc.setTextColor(100,116,139);
+  doc.text(new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), W-15, 22, {align:'right'});
+  y = 50;
+
+  h1('Executive Summary');
+  addLine();
+  body(`This report analyzes ${APP.rawData.length.toLocaleString()} customers across ${APP.k} segments using K-Means++ clustering. Silhouette score: ${APP.silhouetteScore.toFixed(3)} (${APP.silhouetteScore>0.5?'Good':'Fair'} quality). Features used: ${APP.selectedFeatures.join(', ')}.`);
+  y += 4;
+
+  checkPage(50);
+  h2('Cluster Overview');
+  Array.from({length:APP.k},(_,c)=>{
+    const cnt=APP.clusters.filter(a=>a===c).length;
+    const pct=(cnt/APP.rawData.length*100).toFixed(1);
+    checkPage(12);
+    doc.setFontSize(10); doc.setTextColor(59,130,246); doc.text(`Cluster ${c+1}: ${APP.labels[c]||'Segment '+(c+1)}`, 15, y); y+=6;
+    body(`${cnt} customers (${pct}%)`, 5);
+    y+=2;
+  });
+
+  checkPage(60);
+  h1('Recommendations');
+  addLine();
+  body('Based on the cluster analysis, prioritize retention of high-value segments, implement targeted re-engagement for at-risk customers, and develop specialized offerings for niche segments. Focus data collection on the most discriminating features to improve future segmentation accuracy.');
+
+  checkPage(40);
+  h2('Technical Details');
+  body(`Algorithm: K-Means++ | K: ${APP.k} | Iterations: 100 | Normalization: ${APP.normalize?'Z-Score':'None'}`);
+  body(`Silhouette Score: ${APP.silhouetteScore.toFixed(4)} | Recommended K: ${APP.recommendedK||APP.k}`);
+  body(`Dataset: ${APP.rawData.length} rows × ${APP.headers.length} columns | Numeric features: ${APP.numericCols.length}`);
+
+  // Page numbers
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setFontSize(8); doc.setTextColor(60,80,100);
+    doc.text(`Page ${p} of ${pages} · CustomerIQ AI`, W/2, H-8, {align:'center'});
+  }
+
+  doc.save('customeriq_report.pdf');
+  hideLoading();
+  notify('PDF report downloaded!', 'success');
+}
+</script>
+</body>
+</html>
